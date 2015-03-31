@@ -1,0 +1,4 @@
+rootProject.name = 'gradle-mixed-jdk'
+
+include 'java6-module'
+include 'java8-module'

@@ -1,0 +1,71 @@
+import org.gradle.internal.jvm.Jvm
+
+apply plugin: 'java'
+
+version = '1.0'
+
+ext {
+    java6Home = Jvm.forHome( new File( "/opt/java/oracle-jdk7/current") ) as Jvm;
+    java8Home = Jvm.forHome( new File( "/opt/java/oracle-jdk8/current") ) as Jvm;
+}
+
+subprojects { subproject->
+    apply plugin: 'java'
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.11'
+        testCompile 'com.h2database:h2:1.4.186'
+    }
+
+    subproject.tasks.withType( JavaCompile.class ).all { task->
+        task.options.compilerArgs += [
+                "-nowarn",
+                "-encoding", "UTF-8"
+        ]
+
+        if ( subproject.name.equals( 'java8-module' ) ) {
+			task.options.fork = true
+			task.options.forkOptions.executable = java8Home.javacExecutable
+
+            task.options.compilerArgs += [
+                    "-source", '1.8',
+                    "-target", '1.8'
+            ]
+
+            if ( !JavaVersion.current().java8Compatible ) {
+                task.options.bootClasspath = java8Home.runtimeJar.absolutePath
+            }
+        }
+        else {
+            task.options.fork = true
+            task.options.forkOptions.executable = java6Home.javacExecutable
+
+            task.options.compilerArgs += [
+                    "-source", '1.6',
+                    "-target", '1.6'
+            ]
+
+            if ( JavaVersion.current().java8Compatible ) {
+                task.options.bootClasspath = java6Home.runtimeJar.absolutePath
+            }
+        }
+
+        task.doFirst {
+            println "  (${name}) Performing javac w/ executable = ${options.forkOptions.executable}, compilerArgs = ${options.compilerArgs}, bootstrapclasspath = ${options.bootClasspath}"
+        }
+    }
+
+    subproject.tasks.withType( Test.class ).all { task->
+        if ( subproject.name.equals( 'java8-module' ) ) {
+            task.executable = java8Home.javaExecutable
+        }
+        else {
+			task.executable = java6Home.javaExecutable
+        }
+
+        task.doFirst {
+            println "  (${name}) Performing tests w/ executable = ${executable}"
+        }
+    }
+
+}
