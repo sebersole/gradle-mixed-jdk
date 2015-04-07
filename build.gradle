@@ -24,14 +24,6 @@ idea {
 allprojects {
     repositories {
         mavenCentral()
-//        maven {
-//            name 'jboss-nexus'
-//            url "http://repository.jboss.org/nexus/content/groups/public/"
-//        }
-//        maven {
-//            name "jboss-snapshots"
-//            url "http://snapshots.jboss.org/maven2/"
-//        }
     }
 }
 
@@ -78,6 +70,11 @@ subprojects { subproject->
             // AnimalSniffer will complain about the usage of ConcurrentHashMap#keySet
             // in org.hibernate.gradle.mixedjdkissue.Repository.  See the discussion
             // there for details.
+            //
+            // Technically we need only one here between:
+            //      1) setting the javac executable
+            //      2) setting the bootClasspath
+            // However, (1) requires fork=true whereas (2) does not.
             task.options.forkOptions.executable = java6Home.javacExecutable
 
             task.options.compilerArgs += [
@@ -85,9 +82,9 @@ subprojects { subproject->
                     "-target", '1.6'
             ]
 
-//            if ( JavaVersion.current().java8Compatible ) {
-//                task.options.bootClasspath = java6Home.runtimeJar.absolutePath
-//            }
+            if ( JavaVersion.current().java8Compatible ) {
+                task.options.bootClasspath = java6Home.runtimeJar.absolutePath
+            }
         }
 
         task.doFirst {
