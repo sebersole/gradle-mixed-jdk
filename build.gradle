@@ -1,20 +1,56 @@
 import org.gradle.internal.jvm.Jvm
 
 apply plugin: 'java'
+apply plugin: 'idea'
 
 version = '1.0'
 
 ext {
-    java6Home = Jvm.forHome( new File( "/opt/java/oracle-jdk7/current") ) as Jvm;
+    java6Home = Jvm.forHome( new File( "/opt/java/oracle-jdk6/current") ) as Jvm;
     java8Home = Jvm.forHome( new File( "/opt/java/oracle-jdk8/current") ) as Jvm;
+}
+
+idea {
+    project {
+        jdkName = '1.6'
+        languageLevel = '1.6'
+
+        vcs = 'Git'
+    }
+    module {
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+//        maven {
+//            name 'jboss-nexus'
+//            url "http://repository.jboss.org/nexus/content/groups/public/"
+//        }
+//        maven {
+//            name "jboss-snapshots"
+//            url "http://snapshots.jboss.org/maven2/"
+//        }
+    }
 }
 
 subprojects { subproject->
     apply plugin: 'java'
 
+    configurations {
+        animalSnifferSignature
+    }
+
     dependencies {
         testCompile group: 'junit', name: 'junit', version: '4.11'
         testCompile 'com.h2database:h2:1.4.186'
+
+        animalSnifferSignature 'org.codehaus.mojo.signature:java16:1.0@signature'
+    }
+
+    if ( subproject.name != 'java8-module' ) {
+        apply plugin: org.hibernate.build.gradle.animalsniffer.AnimalSnifferPlugin
     }
 
     subproject.tasks.withType( JavaCompile.class ).all { task->
@@ -23,8 +59,9 @@ subprojects { subproject->
                 "-encoding", "UTF-8"
         ]
 
+        task.options.fork = true
+
         if ( subproject.name.equals( 'java8-module' ) ) {
-			task.options.fork = true
 			task.options.forkOptions.executable = java8Home.javacExecutable
 
             task.options.compilerArgs += [
@@ -37,7 +74,10 @@ subprojects { subproject->
             }
         }
         else {
-            task.options.fork = true
+            // if we don't do these executable/bootClasspath overrides
+            // AnimalSniffer will complain about the usage of ConcurrentHashMap#keySet
+            // in org.hibernate.gradle.mixedjdkissue.Repository.  See the discussion
+            // there for details.
             task.options.forkOptions.executable = java6Home.javacExecutable
 
             task.options.compilerArgs += [
@@ -45,9 +85,9 @@ subprojects { subproject->
                     "-target", '1.6'
             ]
 
-            if ( JavaVersion.current().java8Compatible ) {
-                task.options.bootClasspath = java6Home.runtimeJar.absolutePath
-            }
+//            if ( JavaVersion.current().java8Compatible ) {
+//                task.options.bootClasspath = java6Home.runtimeJar.absolutePath
+//            }
         }
 
         task.doFirst {
@@ -68,4 +108,24 @@ subprojects { subproject->
         }
     }
 
+    idea {
+        module {
+            if ( subproject.name.equals( 'java8-module' ) ) {
+                jdkName = '1.8'
+            }
+            excludeDirs = [file( ".gradle" )]
+            excludeDirs += file( "$buildDir/classes" )
+            excludeDirs += file( "$buildDir/bundles" )
+            excludeDirs += file( "$buildDir/packages" )
+            excludeDirs += file( "$buildDir/dependency-cache" )
+            excludeDirs += file( "$buildDir/libs" )
+            excludeDirs += file( "$buildDir/reports" )
+            excludeDirs += file( "$buildDir/test-results" )
+            excludeDirs += file( "$buildDir/tmp" )
+            excludeDirs += file( "$buildDir/matrix" )
+            excludeDirs += file( "$buildDir/resources" )
+
+            downloadSources = true
+        }
+    }
 }

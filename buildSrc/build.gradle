@@ -1,0 +1,18 @@
+repositories {
+	mavenCentral()
+}
+
+apply plugin: "groovy"
+
+dependencies {
+	compile gradleApi()
+	compile localGroovy()
+
+	// AnimalSniffer suffers from a bug in 1.14 which hits us hard.
+	// But unfortunately every version prior to 1.14 uses a version
+	// of ASM that does not support Java 8.  So we need to use
+	// AnimalSniffer 1.13 (bug not present) but override its ASM
+	// version to one that supports Java 8
+	compile 'org.codehaus.mojo:animal-sniffer:1.13'
+	compile 'org.ow2.asm:asm-all:5.0.3'
+}

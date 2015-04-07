@@ -1,60 +1,88 @@
 version = '1.0'
 
-repositories {
-    mavenCentral()
-}
-
-configurations {
-    jaxb {
-        description = 'Dependencies for running ant xjc (jaxb class generation)'
-    }
-}
+apply plugin: org.hibernate.build.gradle.jaxb.JaxbPlugin
 
 dependencies {
-    jaxb 'com.sun.xml.bind:jaxb-xjc:2.2.5'
-    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics:0.6.3'
-    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics-ant:0.6.3'
-    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics-jaxb-xjc:2.2.4-1'
+    compile 'org.hibernate:hibernate-core:5.0.0.Beta1'
+
+    jaxb 'org.glassfish.jaxb:jaxb-xjc:2.2.11'
+    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics:0.9.3'
+    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics-ant:0.9.3'
+//    jaxb gradleApi()
+
+//    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics:0.6.3'
+//    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics-ant:0.6.3'
+//    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics-jaxb-xjc:2.2.4-1'
 
 //    jaxb2_jaxb:     'org.jvnet.jaxb2_commons:jaxb2-basics-jaxb:2.2.4-1',
 }
 
-ext {
-    jaxbTargetDir = file( "${buildDir}/generated-src/jaxb/main" )
-}
+jaxb {
+    outputDir = file( "${buildDir}/generated-src/jaxb/main" )
 
+    schemas {
+        cfg {
+            xsd = file( 'src/main/resources/org/hibernate/xsd/cfg/legacy-configuration-4.0.xsd')
+            xjcBinding = file( 'src/main/xjc-bindings/hbm-configuration-bindings.xjb' )
+        }
 
-task jaxb {
-    ext {
-        // input schemas
-        cfgXsd = file( 'src/main/resources/org/hibernate/xsd/cfg/legacy-configuration-4.0.xsd')
-
-        // input bindings
-        cfgXjb = file( 'src/main/xjc-bindings/hbm-configuration-bindings.xjb' )
-    }
-
-    // configure Gradle up-to-date checking
-    inputs.files( [cfgXsd, cfgXjb] )
-    outputs.dir( jaxbTargetDir )
-
-    // perform actions
-    doLast {
-        jaxbTargetDir.mkdirs()
-
-        ant.taskdef(name: 'xjc', classname: 'org.jvnet.jaxb2_commons.xjc.XJC2Task', classpath: configurations.jaxb.asPath)
-        ant.jaxbTargetDir = jaxbTargetDir
-
-        // hibernate-configuration
-        ant.xjc(
-                destdir: '${jaxbTargetDir}',
-                binding: cfgXjb.path,
-                schema: cfgXsd.path
-        )
+        hbm {
+            xsd = file( 'src/main/resources/org/hibernate/xsd/mapping/legacy-mapping-4.0.xsd' )
+            xjcBinding = file( 'src/main/xjc-bindings/hbm-mapping-bindings.xjb' )
+            xjcExtensions = ['inheritance', 'simplify']
+        }
     }
 }
 
-sourceSets.main {
-    java.srcDir jaxbTargetDir
-}
-
-compileJava.dependsOn jaxb
+//ext {
+//    jaxbTargetDir = file( "${buildDir}/generated-src/jaxb/main" )
+//}
+//
+//task jaxb {
+//    ext {
+//        // input schemas
+//        cfgXsd = file( 'src/main/resources/org/hibernate/xsd/cfg/legacy-configuration-4.0.xsd')
+//        hbmXsd = file( 'src/main/resources/org/hibernate/xsd/mapping/legacy-mapping-4.0.xsd' )
+//
+//        // input bindings
+//        cfgXjb = file( 'src/main/xjc-bindings/hbm-configuration-bindings.xjb' )
+//        hbmXjb = file( 'src/main/xjc-bindings/hbm-mapping-bindings.xjb' )
+//    }
+//
+//    // configure Gradle up-to-date checking
+//    inputs.files( [cfgXsd, hbmXsd, cfgXjb, hbmXjb] )
+//    outputs.dir( jaxbTargetDir )
+//
+//    // perform actions
+//    doLast {
+//        jaxbTargetDir.mkdirs()
+//
+//        ant.taskdef(name: 'xjc', classname: 'org.jvnet.jaxb2_commons.xjc.XJC2Task', classpath: configurations.jaxb.asPath)
+//        ant.jaxbTargetDir = jaxbTargetDir
+//
+//        // hibernate-configuration
+//        ant.xjc(
+//                destdir: "${jaxbTargetDir}",
+//                binding: cfgXjb.path,
+//                schema: cfgXsd.path,
+//                target: '2.0'
+//        )
+//
+//        // hibernate-mapping
+//        ant.xjc(
+//                destdir: "${jaxbTargetDir}",
+//                binding: hbmXjb.path,
+//                schema: hbmXsd.path,
+//                extension: 'true',
+//                target: '2.0'
+//        ) {
+//            arg line:     '-Xinheritance -Xsimplify'
+//        }
+//    }
+//}
+//
+//sourceSets.main {
+//    java.srcDir jaxbTargetDir
+//}
+//
+//compileJava.dependsOn jaxb
