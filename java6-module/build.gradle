@@ -1,17 +1,35 @@
 version = '1.0'
 
-apply plugin: org.hibernate.build.gradle.jaxb.JaxbPlugin
+buildscript {
+    repositories {
+        mavenCentral()
+
+        maven {
+            name 'jboss-nexus'
+            url "http://repository.jboss.org/nexus/content/groups/public/"
+        }
+        maven {
+            name "jboss-snapshots"
+            url "http://snapshots.jboss.org/maven2/"
+        }
+    }
+    dependencies {
+        classpath 'org.hibernate.build.gradle:gradle-xjc-plugin:1.0-SNAPSHOT'
+    }
+}
+
+apply plugin: 'org.hibernate.build.gradle.xjc'
 
 dependencies {
     compile 'org.hibernate:hibernate-core:5.0.0.Beta1'
 
-    jaxb 'org.glassfish.jaxb:jaxb-xjc:2.2.11'
-    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics:0.9.3'
-    jaxb 'org.jvnet.jaxb2_commons:jaxb2-basics-ant:0.9.3'
+    xjc 'org.glassfish.jaxb:jaxb-xjc:2.2.11'
+    xjc 'org.jvnet.jaxb2_commons:jaxb2-basics:0.9.3'
+    xjc 'org.jvnet.jaxb2_commons:jaxb2-basics-ant:0.9.3'
 }
 
-jaxb {
-    outputDir = file( "${buildDir}/generated-src/jaxb/main" )
+xjc {
+    outputDir = file( "${buildDir}/generated-src/xjc/main" )
 
     schemas {
         cfg {
