@@ -22,15 +22,9 @@ apply plugin: 'org.hibernate.build.gradle.xjc'
 
 dependencies {
     compile 'org.hibernate:hibernate-core:5.0.0.Beta1'
-
-    xjc 'org.glassfish.jaxb:jaxb-xjc:2.2.11'
-    xjc 'org.jvnet.jaxb2_commons:jaxb2-basics:0.9.3'
-    xjc 'org.jvnet.jaxb2_commons:jaxb2-basics-ant:0.9.3'
 }
 
 xjc {
-    outputDir = file( "${buildDir}/generated-src/xjc/main" )
-
     schemas {
         cfg {
             xsd = file( 'src/main/resources/org/hibernate/xsd/cfg/legacy-configuration-4.0.xsd')
